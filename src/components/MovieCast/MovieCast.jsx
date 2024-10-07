@@ -1,43 +1,43 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { fetchMovieCast } from "../../services/apiService.js";
 import styles from "./MovieCast.module.css";
 
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import './MovieCast.module.css';
-
-const BASE_URL = 'https://api.themoviedb.org/3';
-const API_KEY = 'd0626dcfe633566a19452ac778a15569'; 
-
-
-function MovieCast({ movieId }) {
+function MovieCast() {
+  const { movieId } = useParams();
   const [cast, setCast] = useState([]);
 
   useEffect(() => {
-    const fetchCast = async () => {
+    const getCast = async () => {
       try {
-        const response = await axios.get(
-          `${BASE_URL}/movie/${movieId}/credits`, 
-          {
-            params: {
-              api_key: API_KEY,
-            },
-          }
-        );
+        const response = await fetchMovieCast(movieId);
         setCast(response.data.cast);
       } catch (error) {
-        console.error('Error fetching movie cast:', error);
+        console.error("Error fetching movie cast:", error);
       }
     };
 
-    fetchCast();
+    getCast();
   }, [movieId]);
 
   return (
-    <div>
+    <div className={styles.castContainer}>
       <h2>Cast</h2>
-      <ul>
+      <ul className={styles.castList}>
         {cast.map((member) => (
-          <li key={member.cast_id}>
-            {member.name} as {member.character}
+          <li key={member.cast_id} className={styles.castItem}>
+            <img
+              src={
+                member.profile_path
+                  ? `https://image.tmdb.org/t/p/w200/${member.profile_path}`
+                  : "https://via.placeholder.com/200x300?text=No+Image"
+              }
+              alt={member.name}
+              className={styles.castImage}
+            />
+            <p>
+              {member.name} as {member.character}
+            </p>
           </li>
         ))}
       </ul>
@@ -46,4 +46,3 @@ function MovieCast({ movieId }) {
 }
 
 export default MovieCast;
-
