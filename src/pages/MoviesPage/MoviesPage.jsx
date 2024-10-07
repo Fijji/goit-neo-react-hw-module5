@@ -2,11 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { searchMovies } from "../../services/apiService.js";
 import MovieList from "../../components/MovieList/MovieList.jsx";
 import styles from "./MoviesPage.module.css";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 function MoviesPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
 
@@ -16,60 +15,56 @@ function MoviesPage() {
         setMovies([]);
         return;
       }
+
       try {
         const response = await searchMovies(searchQuery);
         setMovies(response.data.results);
 
-        navigate({
-          pathname: "/movies",
-          search: `?name=${searchQuery}`,
-        });
-
-        setQuery("");
+        setSearchParams({ name: searchQuery });
       } catch (error) {
         console.error("Error searching for movies:", error);
       }
     },
-    [navigate]
+    [setSearchParams]
   );
 
   const handleQueryChange = (e) => {
-    const searchQuery = e.target.value;
-    setQuery(searchQuery);
+    setQuery(e.target.value);
+  };
 
-    if (searchQuery === "") {
-      navigate({
-        pathname: "/movies",
-      });
-      setMovies([]);
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const searchQuery = form.elements.search.value;
+
+    handleSearch(searchQuery);
+
+    form.reset();
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const searchQuery = params.get("name");
+    const searchQuery = searchParams.get("name");
 
     if (searchQuery) {
-      setQuery(searchQuery);
       handleSearch(searchQuery);
     }
-  }, [location.search, handleSearch]);
+  }, [searchParams, handleSearch]);
 
   return (
     <div className={styles.moviesContainer}>
-      <input
-        type="text"
-        value={query}
-        onChange={handleQueryChange}
-        className={styles.searchInput}
-        placeholder="Search for movies..."
-      />
-      <button
-        onClick={() => handleSearch(query)}
-        className={styles.searchButton}
-      >
-        Search
-      </button>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="search"
+          value={query}
+          onChange={handleQueryChange}
+          className={styles.searchInput}
+          placeholder="Search for movies..."
+        />
+        <button type="submit" className={styles.searchButton}>
+          Search
+        </button>
+      </form>
       <MovieList movies={movies} />
     </div>
   );
